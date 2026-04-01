@@ -167,16 +167,16 @@ export default function Home() {
 
       {/* Page header */}
       <div className="page-header">
-        <h1>Media Selector 🏆</h1>
+        <h1>Media Selector <span style={{ WebkitTextFillColor: 'initial' }}>🏆</span></h1>
         <p style={{ color: 'var(--muted)', maxWidth: '480px' }}>
           Confronta e scegli le migliori risorse attraverso un torneo 1 contro 1.
         </p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.3fr', gap: '2rem', alignItems: 'flex-start' }}>
+      <div className="home-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1.3fr', gap: '2rem', alignItems: 'flex-start' }}>
 
         {/* ── New Session Form ── */}
-        <div className="card" style={{ position: 'sticky', top: '2rem' }}>
+        <div className="card form-sticky" style={{ position: 'sticky', top: '2rem' }}>
           <h2 style={{ marginBottom: '1.5rem' }}>Nuova Selezione</h2>
 
           {error && (
@@ -203,11 +203,19 @@ export default function Home() {
 
             <div>
               <label>Tipo Media</label>
-              <select value={type} onChange={e => { setType(e.target.value); setSourceFiles([]); }}>
-                <option value="video">🎬 Video</option>
-                <option value="image">🖼️ Immagini</option>
-                <option value="text">📝 Testo</option>
-              </select>
+              <div className="type-segmented">
+                {[{ v: 'video', icon: '🎬', label: 'Video' }, { v: 'image', icon: '🖼️', label: 'Immagini' }, { v: 'text', icon: '📝', label: 'Testo' }].map(({ v, icon, label }) => (
+                  <button
+                    key={v}
+                    type="button"
+                    className={`type-seg-btn${type === v ? ' active' : ''}`}
+                    onClick={() => { setType(v); setSourceFiles([]); }}
+                  >
+                    <span className="seg-icon">{icon}</span>
+                    <span>{label}</span>
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div>
@@ -313,6 +321,52 @@ export default function Home() {
       <style jsx>{`
         .session-card { transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s; }
         .session-card:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,0,0,0.4); border-color: var(--card-border-hover); }
+
+        /* ── Segmented control ── */
+        .type-segmented {
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr;
+          background: rgba(255,255,255,0.03);
+          border: 1px solid var(--card-border);
+          border-radius: var(--radius-sm);
+          padding: 4px;
+          gap: 4px;
+        }
+        .type-seg-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.4rem;
+          padding: 0.6rem 0.5rem;
+          border-radius: 6px;
+          font-size: 0.9rem;
+          font-weight: 500;
+          color: var(--muted);
+          background: transparent;
+          border: none;
+          cursor: pointer;
+          transition: all 0.18s ease;
+          white-space: nowrap;
+        }
+        .type-seg-btn:hover:not(.active) {
+          background: rgba(255,255,255,0.05);
+          color: var(--foreground);
+        }
+        .type-seg-btn.active {
+          background: linear-gradient(135deg, var(--accent), #818cf8);
+          color: #fff;
+          font-weight: 600;
+          box-shadow: 0 2px 10px var(--accent-glow);
+        }
+        .seg-icon { font-size: 1.1rem; }
+
+        @media (max-width: 640px) {
+          .type-segmented { grid-template-columns: 1fr; }
+          .type-seg-btn { justify-content: flex-start; padding: 0.65rem 1rem; }
+          .sources-grid { grid-template-columns: 1fr !important; }
+          .session-header-row { flex-direction: column; align-items: flex-start !important; }
+          .session-actions { width: 100%; justify-content: flex-end; }
+        }
       `}</style>
     </div>
   );

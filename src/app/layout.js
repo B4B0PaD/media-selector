@@ -17,10 +17,15 @@ export const metadata = {
   description: "Organizza le tue risorse e scegli le migliori in stile torneo.",
 };
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+};
+
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body>
+      <body suppressHydrationWarning>
         <Script src="https://apis.google.com/js/api.js" strategy="beforeInteractive" />
         <Script src="https://accounts.google.com/gsi/client" strategy="beforeInteractive" />
         {children}

@@ -110,7 +110,7 @@ export default function SessionPage({ params }) {
     return (
       <div className="container">
         {/* Top nav */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        <div className="top-nav" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', gap: '0.75rem', flexWrap: 'wrap' }}>
           <button className="btn btn-outline" onClick={() => router.push('/')}>
             ← Dashboard
           </button>
@@ -160,7 +160,7 @@ export default function SessionPage({ params }) {
               const w1 = match.winner === match.item1;
               const w2 = match.winner === match.item2;
               return (
-                <div key={match.id} className="card" style={{
+                <div key={match.id} className="card match-row" style={{
                   display: 'grid',
                   gridTemplateColumns: '1fr auto 1fr',
                   alignItems: 'center',
@@ -208,7 +208,7 @@ export default function SessionPage({ params }) {
   return (
     <div className="container" style={{ maxWidth: '1600px' }}>
       {/* Top nav bar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+      <div className="top-nav" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', gap: '0.75rem', flexWrap: 'wrap' }}>
         <button className="btn btn-outline" onClick={() => router.push('/')}>
           ← Pausa
         </button>
@@ -233,7 +233,7 @@ export default function SessionPage({ params }) {
       {currentMatch && (
         <>
           {/* Arena */}
-          <div style={{
+          <div className="arena-grid" style={{
             display: 'grid',
             gridTemplateColumns: '1fr auto 1fr',
             gap: '1.5rem',
@@ -306,3 +306,7 @@ export default function SessionPage({ params }) {
     </div>
   );
 }
+
+/* ---------------- responsive styles via JSX global injection ---------------- */
+// We append a real style tag so media queries work without styled-jsx issues.
+// (styled-jsx @media inside style jsx works fine, but we keep it here for clarity.)

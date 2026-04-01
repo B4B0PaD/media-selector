@@ -158,8 +158,8 @@ export default function LocalFilePicker({ onCancel, onConfirm, initialType }) {
       <style jsx>{`
         .modal-overlay {
           position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-          background: rgba(0,0,0,0.8); backdrop-filter: blur(5px);
-          display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 2rem;
+          background: rgba(0,0,0,0.85); backdrop-filter: blur(6px);
+          display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 1.5rem;
         }
         .picker-modal { width: 100%; max-width: 800px; height: 80vh; display: flex; flex-direction: column; }
         .items-list {
@@ -167,9 +167,15 @@ export default function LocalFilePicker({ onCancel, onConfirm, initialType }) {
           border: 1px solid var(--card-border); border-radius: 8px; background: #0f1115;
         }
         .item-row {
-          display: flex; alignItems: center; padding: 0.75rem 1rem; border-bottom: 1px solid var(--card-border);
+          display: flex; align-items: center; padding: 0.75rem 1rem; border-bottom: 1px solid var(--card-border);
         }
         .item-row:hover { background: rgba(255,255,255,0.05); }
+
+        @media (max-width: 640px) {
+          .modal-overlay { padding: 0; align-items: flex-end; }
+          .picker-modal { max-width: 100%; height: 92vh; border-radius: 16px 16px 0 0; }
+          .item-row { padding: 0.85rem 1rem; font-size: 0.9rem; }
+        }
       `}</style>
     </div>
   );

@@ -280,3 +280,73 @@ label {
 .animate-fadeInUp {
   animation: fadeInUp 0.4s ease-out both;
 }
+
+/* ── Responsive ── */
+@media (max-width: 1024px) {
+  h1 { font-size: 2rem; }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 1.25rem;
+  }
+
+  h1 { font-size: 1.75rem; }
+  h2 { font-size: 1.25rem; }
+
+  .card {
+    padding: 1.1rem;
+  }
+
+  /* Stack the main two-column layout */
+  .home-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Un-sticky the form on mobile */
+  .form-sticky {
+    position: static !important;
+  }
+
+  /* Arena: stack items vertically */
+  .arena-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* VS becomes a horizontal row */
+  .vs-divider {
+    flex-direction: row !important;
+    font-size: 1rem;
+    padding: 0.5rem 0;
+  }
+
+  .vs-divider > div {
+    width: 40px !important;
+    height: 2px !important;
+    background: linear-gradient(to right, transparent, var(--danger), transparent) !important;
+  }
+
+  /* Decision tree: smaller text */
+  .match-row {
+    padding: 0.7rem 0.85rem !important;
+    font-size: 0.82rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 1rem;
+  }
+
+  h1 { font-size: 1.5rem; }
+
+  .btn {
+    font-size: 0.85rem;
+    padding: 0.6rem 1rem;
+  }
+
+  .badge {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+  }
+}
