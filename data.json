@@ -1,0 +1,49 @@
+{
+  "sessions": [
+    {
+      "id": "eb8e8614-9db6-4f58-a0f8-19900b8000e2",
+      "name": "test2",
+      "type": "video",
+      "sourcePath": "mixed-selection",
+      "initialQueue": [
+        "C:\\Users\\babinia\\Downloads\\intro 07.mp4",
+        "C:\\Users\\babinia\\Downloads\\intro 01.mp4",
+        "drive:1ntluVw7umNW3VSattkWHVDh1No2fe2ze",
+        "drive:1RjMOxxpRHH6U2DYP990UsexO2XFrqGvv",
+        "C:\\Users\\babinia\\Downloads\\intro 05.mp4"
+      ],
+      "matches": [
+        {
+          "id": "ad38598b-2f8b-4555-9076-d08fe5eaa64e",
+          "item1": "C:\\Users\\babinia\\Downloads\\intro 07.mp4",
+          "item2": "C:\\Users\\babinia\\Downloads\\intro 01.mp4",
+          "winner": "C:\\Users\\babinia\\Downloads\\intro 01.mp4"
+        },
+        {
+          "id": "32c486e2-5814-4db2-bf9c-c98538b7c2f4",
+          "item1": "drive:1ntluVw7umNW3VSattkWHVDh1No2fe2ze",
+          "item2": "drive:1RjMOxxpRHH6U2DYP990UsexO2XFrqGvv",
+          "winner": "drive:1RjMOxxpRHH6U2DYP990UsexO2XFrqGvv"
+        },
+        {
+          "id": "079ba98d-f14e-4aad-819b-3fe99686d341",
+          "item1": "C:\\Users\\babinia\\Downloads\\intro 01.mp4",
+          "item2": "drive:1RjMOxxpRHH6U2DYP990UsexO2XFrqGvv",
+          "winner": "C:\\Users\\babinia\\Downloads\\intro 01.mp4"
+        },
+        {
+          "id": "ca7d867d-ac72-4283-8179-79cb54421f31",
+          "item1": "C:\\Users\\babinia\\Downloads\\intro 01.mp4",
+          "item2": "C:\\Users\\babinia\\Downloads\\intro 05.mp4",
+          "winner": "C:\\Users\\babinia\\Downloads\\intro 01.mp4"
+        }
+      ],
+      "queue": [],
+      "nextRoundQueue": [
+        "C:\\Users\\babinia\\Downloads\\intro 01.mp4"
+      ],
+      "winner": "C:\\Users\\babinia\\Downloads\\intro 01.mp4",
+      "createdAt": "2026-04-01T08:33:06.177Z"
+    }
+  ]
+}
