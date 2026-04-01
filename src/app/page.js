@@ -168,7 +168,7 @@ export default function Home() {
       {/* Page header */}
       <div className="page-header">
         <h1>Media Selector <span style={{ WebkitTextFillColor: 'initial' }}>🏆</span></h1>
-        <p style={{ color: 'var(--muted)', maxWidth: '480px' }}>
+        <p style={{ color: 'var(--muted)' }}>
           Confronta e scegli le migliori risorse attraverso un torneo 1 contro 1.
         </p>
       </div>
