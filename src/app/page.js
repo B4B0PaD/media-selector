@@ -5,6 +5,86 @@ import { useRouter } from 'next/navigation';
 import LocalFilePicker from '@/components/LocalFilePicker';
 import GoogleDrivePicker from '@/components/GoogleDrivePicker';
 
+const TYPE_ICONS = { video: '🎬', image: '🖼️', text: '📝' };
+const TYPE_LABELS = { video: 'Video', image: 'Immagini', text: 'Testo' };
+
+function formatDate(iso) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleDateString('it-IT', {
+    day: '2-digit', month: 'short', year: 'numeric'
+  });
+}
+
+function SessionCard({ s, onResume, onDelete }) {
+  const totalItems = s.initialQueue?.length || (s.queue.length + s.nextRoundQueue.length);
+  const matchesDone = s.matches?.length || 0;
+  const isWinner = !!s.winner;
+
+  // How many matches will a full tournament of N items take? N-1 total.
+  const totalMatches = Math.max(totalItems - 1, 1);
+  const pct = Math.min(Math.round((matchesDone / totalMatches) * 100), 100);
+
+  return (
+    <div className="card session-card animate-fadeInUp" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      {/* Header row */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem' }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h3 style={{ margin: 0, marginBottom: '0.4rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {s.name}
+          </h3>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <span className={`badge badge-accent`}>
+              {TYPE_ICONS[s.type]} {TYPE_LABELS[s.type]}
+            </span>
+            <span className={`badge ${isWinner ? 'badge-success' : 'badge-warning'}`}>
+              {isWinner ? '🏆 Completato' : `${totalItems} file`}
+            </span>
+            <span style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>
+              {formatDate(s.createdAt)}
+            </span>
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
+          <button
+            onClick={() => onResume(s.id)}
+            className="btn btn-outline"
+            style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+          >
+            {isWinner ? '📊 Risultati' : '▶ Riprendi'}
+          </button>
+          <button
+            onClick={() => onDelete(s.id, s.name)}
+            className="btn btn-danger"
+            style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}
+            title="Elimina sessione"
+          >
+            🗑️
+          </button>
+        </div>
+      </div>
+
+      {/* Progress bar */}
+      {!isWinner && (
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem', fontSize: '0.78rem', color: 'var(--muted)' }}>
+            <span>{matchesDone} match completati</span>
+            <span>{pct}%</span>
+          </div>
+          <div className="progress-bar-wrap">
+            <div className="progress-bar-fill" style={{ width: `${pct}%` }} />
+          </div>
+        </div>
+      )}
+
+      {isWinner && (
+        <div style={{ fontSize: '0.85rem', color: 'var(--muted)', fontFamily: 'var(--font-geist-mono)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          🏆 {s.winner?.split(/[/\\]/).pop()}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Home() {
   const router = useRouter();
   const [sessions, setSessions] = useState([]);
@@ -13,7 +93,7 @@ export default function Home() {
   const [name, setName] = useState('');
   const [type, setType] = useState('video');
   const [sourceFiles, setSourceFiles] = useState([]);
-  
+
   const [showLocalPicker, setShowLocalPicker] = useState(false);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState(null);
@@ -21,16 +101,11 @@ export default function Home() {
   useEffect(() => {
     fetch('/api/sessions')
       .then(res => res.json())
-      .then(data => {
-        setSessions(data);
-        setLoading(false);
-      });
+      .then(data => { setSessions(data); setLoading(false); });
   }, []);
 
   const handleFilesSelected = (files) => {
     if (files.length === 0) return;
-    
-    // Add only new files to avoid duplicates based on 'path'
     setSourceFiles(prev => {
       const existingPaths = new Set(prev.map(f => f.path));
       const newFiles = files.filter(f => !existingPaths.has(f.path));
@@ -45,136 +120,139 @@ export default function Home() {
 
   const handleCreate = async (e) => {
     e.preventDefault();
-    
     if (sourceFiles.length < 2) {
-      setError('Devi selezionare almeno 2 file per iniziare un torneo.');
+      setError('Seleziona almeno 2 file per iniziare un torneo.');
       return;
     }
-
     setCreating(true);
     setError(null);
 
-    // If Google Drive files exist, store the token temporarily 
     const driveFile = sourceFiles.find(f => f.source === 'gdrive' && f.token);
-    if (driveFile) {
-       localStorage.setItem('gdrive_token', driveFile.token);
-    }
+    if (driveFile) localStorage.setItem('gdrive_token', driveFile.token);
 
     const res = await fetch('/api/sessions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        name, 
-        type, 
+      body: JSON.stringify({
+        name,
+        type,
         sourcePath: 'mixed-selection',
-        files: sourceFiles.map(f => f.source === 'gdrive' ? `drive:${f.path}` : f.path) 
+        files: sourceFiles.map(f => f.source === 'gdrive' ? `drive:${f.path}` : f.path)
       })
     });
 
     const data = await res.json();
     setCreating(false);
-
-    if (res.ok) {
-      router.push(`/session/${data.id}`);
-    } else {
-      setError(data.error || 'Failed to create selection');
-    }
+    if (res.ok) router.push(`/session/${data.id}`);
+    else setError(data.error || 'Errore durante la creazione');
   };
 
   const handleDeleteSession = async (id, name) => {
-    if (confirm(`Sei sicuro di voler eliminare la selezione "${name}"?`)) {
+    if (confirm(`Sei sicuro di voler eliminare "${name}"?`)) {
       await fetch(`/api/sessions/${id}`, { method: 'DELETE' });
-      // Refresh list
       const res = await fetch('/api/sessions');
-      const data = await res.json();
-      setSessions(data);
+      setSessions(await res.json());
     }
   };
 
   return (
-    <div className="container" style={{ position: 'relative' }}>
-      <h1>Media Selector 🏆</h1>
-      <p style={{ marginBottom: '2rem', color: '#a1a9b3' }}>
-        Confronta e seleziona le migliori risorse in stile torneo.
-      </p>
-
+    <div className="container">
       {showLocalPicker && (
-        <LocalFilePicker 
-          initialType={type} 
-          onCancel={() => setShowLocalPicker(false)} 
-          onConfirm={handleFilesSelected} 
+        <LocalFilePicker
+          initialType={type}
+          onCancel={() => setShowLocalPicker(false)}
+          onConfirm={handleFilesSelected}
         />
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-        
-        {/* New Session Form */}
-        <div className="card">
-          <h2>Nuova Selezione</h2>
-          {error && <div style={{ color: 'var(--danger)', marginBottom: '1rem', padding: '1rem', backgroundColor: 'rgba(207,81,81,0.1)', borderRadius: '8px' }}>{error}</div>}
-          
-          <form onSubmit={handleCreate}>
-            <div style={{ marginBottom: '1rem' }}>
+      {/* Page header */}
+      <div className="page-header">
+        <h1>Media Selector 🏆</h1>
+        <p style={{ color: 'var(--muted)', maxWidth: '480px' }}>
+          Confronta e scegli le migliori risorse attraverso un torneo 1 contro 1.
+        </p>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.3fr', gap: '2rem', alignItems: 'flex-start' }}>
+
+        {/* ── New Session Form ── */}
+        <div className="card" style={{ position: 'sticky', top: '2rem' }}>
+          <h2 style={{ marginBottom: '1.5rem' }}>Nuova Selezione</h2>
+
+          {error && (
+            <div style={{
+              color: 'var(--danger)', marginBottom: '1rem', padding: '0.85rem 1rem',
+              backgroundColor: 'var(--danger-subtle)', borderRadius: 'var(--radius-sm)',
+              border: '1px solid rgba(248,113,113,0.2)', fontSize: '0.9rem'
+            }}>
+              ⚠️ {error}
+            </div>
+          )}
+
+          <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+            <div>
               <label>Nome Selezione</label>
-              <input 
-                type="text" 
-                required 
-                value={name} 
-                onChange={(e) => setName(e.target.value)} 
-                placeholder="es. Scelta Logo Definitivo" 
+              <input
+                type="text"
+                required
+                value={name}
+                onChange={e => setName(e.target.value)}
+                placeholder="es. Selezione Logo Definitivo"
               />
             </div>
-            
-            <div style={{ marginBottom: '1rem' }}>
+
+            <div>
               <label>Tipo Media</label>
-              <select value={type} onChange={(e) => {
-                setType(e.target.value);
-                setSourceFiles([]); // Clear selection when type changes
-              }}>
-                <option value="video">Video</option>
-                <option value="image">Immagini</option>
-                <option value="text">Testo</option>
+              <select value={type} onChange={e => { setType(e.target.value); setSourceFiles([]); }}>
+                <option value="video">🎬 Video</option>
+                <option value="image">🖼️ Immagini</option>
+                <option value="text">📝 Testo</option>
               </select>
             </div>
 
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label>Seleziona File da Esaminare</label>
-              
-              <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
-                <button 
-                  type="button" 
-                  className="btn btn-outline" 
-                  onClick={() => setShowLocalPicker(true)}
-                  style={{ flex: 1 }}
-                >
-                  Sfoglia File Locali
+            <div>
+              <label>Sorgenti</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                <button type="button" className="btn btn-outline" onClick={() => setShowLocalPicker(true)}>
+                  💻 File Locali
                 </button>
-                <div style={{ flex: 1, display: 'flex' }}>
-                   <GoogleDrivePicker 
-                     initialType={type} 
-                     onFilesSelected={handleFilesSelected} 
-                   />
-                </div>
+                <GoogleDrivePicker initialType={type} onFilesSelected={handleFilesSelected} />
               </div>
 
               {sourceFiles.length > 0 && (
-                <div style={{ marginTop: '1rem', backgroundColor: 'var(--card-bg)', borderRadius: '8px', border: '1px solid var(--card-border)', overflow: 'hidden' }}>
-                  <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid var(--card-border)', backgroundColor: 'rgba(94, 106, 210, 0.1)' }}>
-                    ✅ <strong>{sourceFiles.length} file selezionati in coda</strong>
+                <div style={{
+                  marginTop: '0.75rem',
+                  border: '1px solid var(--card-border)',
+                  borderRadius: 'var(--radius-sm)',
+                  overflow: 'hidden',
+                  animation: 'fadeIn 0.3s ease'
+                }}>
+                  <div style={{
+                    padding: '0.6rem 1rem', borderBottom: '1px solid var(--card-border)',
+                    background: 'var(--accent-subtle)', fontSize: '0.85rem', fontWeight: 600,
+                    display: 'flex', alignItems: 'center', gap: '0.5rem'
+                  }}>
+                    <span className="badge badge-accent">{sourceFiles.length}</span>
+                    file in coda
                   </div>
                   <ul style={{ listStyle: 'none', padding: 0, margin: 0, maxHeight: '200px', overflowY: 'auto' }}>
                     {sourceFiles.map((file, idx) => (
-                      <li key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 1rem', borderBottom: '1px solid var(--card-border)' }}>
-                        <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginRight: '1rem' }}>
-                          <span style={{ fontSize: '0.9rem', color: file.source === 'gdrive' ? '#4285F4' : '#00C853', marginRight: '0.5rem', fontWeight: 'bold' }}>
-                            {file.source === 'gdrive' ? '[Drive]' : '[Locale]'}
+                      <li key={idx} style={{
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                        padding: '0.5rem 1rem', borderBottom: '1px solid var(--card-border)'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
+                          <span className={`badge ${file.source === 'gdrive' ? 'badge-drive' : 'badge-local'}`} style={{ flexShrink: 0 }}>
+                            {file.source === 'gdrive' ? '☁️' : '💻'}
                           </span>
-                          <span title={file.name}>{file.name}</span>
+                          <span style={{ fontSize: '0.85rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={file.name}>
+                            {file.name}
+                          </span>
                         </div>
-                        <button 
-                          type="button" 
-                          onClick={() => removeFile(file.path)} 
-                          style={{ background: 'transparent', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '1rem' }}
+                        <button
+                          type="button"
+                          onClick={() => removeFile(file.path)}
+                          style={{ background: 'transparent', border: 'none', color: 'var(--danger)', cursor: 'pointer', flexShrink: 0, padding: '0 0.25rem', fontSize: '1rem' }}
                           title="Rimuovi"
                         >
                           ✕
@@ -186,51 +264,56 @@ export default function Home() {
               )}
             </div>
 
-            <button type="submit" className="btn btn-primary" disabled={creating || sourceFiles.length < 2} style={{ width: '100%' }}>
-              {creating ? 'Creazione in corso...' : 'Inizia Torneo'}
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={creating || sourceFiles.length < 2}
+              style={{ width: '100%', padding: '0.9rem', fontSize: '1rem', marginTop: '0.25rem' }}
+            >
+              {creating ? '⏳ Creazione in corso...' : `🚀 Avvia Torneo ${sourceFiles.length >= 2 ? `(${sourceFiles.length} file)` : ''}`}
             </button>
           </form>
         </div>
 
-        {/* Existing Sessions List */}
+        {/* ── Sessions List ── */}
         <div>
-          <h2>Le tue selezioni</h2>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+            <h2 style={{ margin: 0 }}>Le tue selezioni</h2>
+            {sessions.length > 0 && (
+              <span className="badge badge-accent">{sessions.length}</span>
+            )}
+          </div>
+
           {loading ? (
-            <p>Caricamento...</p>
+            <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--muted)' }}>
+              <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>⏳</div>
+              Caricamento...
+            </div>
           ) : sessions.length === 0 ? (
-            <div className="card" style={{ textAlign: 'center', padding: '3rem 1rem' }}>
-              <p style={{ color: '#a1a9b3' }}>Nessuna selezione presente. Creane una per iniziare!</p>
+            <div className="card" style={{ textAlign: 'center', padding: '3rem 1rem', borderStyle: 'dashed' }}>
+              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🏟️</div>
+              <p style={{ color: 'var(--muted)' }}>Nessuna selezione ancora. Creane una per iniziare!</p>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {sessions.map(s => {
-                const totalItems = s.queue.length + s.nextRoundQueue.length;
-                const isWinner = !!s.winner;
-                
-                return (
-                  <div key={s.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <h3 style={{ margin: 0, fontSize: '1.1rem' }}>{s.name}</h3>
-                      <div style={{ fontSize: '0.9rem', color: '#a1a9b3', marginTop: '0.4rem' }}>
-                        Type: {s.type} • {isWinner ? 'Vincitore Decretato: 🏆' : `Rimanenti: ${totalItems}`}
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <button onClick={() => router.push(`/session/${s.id}`)} className="btn btn-outline" style={{ whiteSpace: 'nowrap' }}>
-                        {isWinner ? 'Vedi Risultati' : 'Riprendi'}
-                      </button>
-                      <button onClick={() => handleDeleteSession(s.id, s.name)} className="btn btn-outline" style={{ whiteSpace: 'nowrap', borderColor: '#4a2525', color: 'var(--danger)' }} title="Elimina Selezione">
-                        🗑️
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
+              {sessions.map(s => (
+                <SessionCard
+                  key={s.id}
+                  s={s}
+                  onResume={id => router.push(`/session/${id}`)}
+                  onDelete={handleDeleteSession}
+                />
+              ))}
             </div>
           )}
         </div>
 
       </div>
+
+      <style jsx>{`
+        .session-card { transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s; }
+        .session-card:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,0,0,0.4); border-color: var(--card-border-hover); }
+      `}</style>
     </div>
   );
 }
